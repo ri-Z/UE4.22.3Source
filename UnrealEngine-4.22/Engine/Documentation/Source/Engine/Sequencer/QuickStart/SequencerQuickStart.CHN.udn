@@ -1,0 +1,71 @@
+﻿INTSourceChangelist:3782314
+Availability:Public
+Title:Sequencer快速入门
+Crumbs: %ROOT%, Engine
+Description:在虚幻引擎4中快速设置和运行Sequencer编辑器的指南。 
+Navigation:topic
+parent:Engine/Sequencer
+order:1
+Version: 4.18
+type:quick start
+checkpoint:sequencerqs
+tags:Sequencer
+tags:Getting Started
+topic-image:sequencerQS_topic.png
+
+[OBJECT:EmbeddedVideo]
+	[PARAMLITERAL:videoid]
+	8d-iuJFT9uM
+	[/PARAMLITERAL]
+	[PARAMLITERAL:width]
+	100
+	[/PARAMLITERAL]
+	[PARAMLITERAL:height]
+	56.25
+	[/PARAMLITERAL]
+	[PARAMLITERAL:units]
+	%
+	[/PARAMLITERAL]
+	[PARAMLITERAL:type]
+	simple
+	[/PARAMLITERAL]
+[/OBJECT]
+
+
+_在本指南结尾，你将得到一个与以上类似的场景。_
+
+(#goals)
+## 目标
+
+Sequencer快速入门指南旨在让你快速上手，掌握在虚幻引擎4（UE4）中创建过场动画的基础知识。 
+
+(#objectives)
+## 目标
+
+在学完本教程后，开发人员将掌握下列知识：
+
+*	如何创建关卡序列。
+*	如何启用过场动画预览。 
+*	如何在镜头中添加和移动摄像机。
+*	如何对角色应用动画。 
+*	如何更改摄像机聚焦设置。
+*	如何创建和使用过场动画的镜头和副镜头。
+
+
+(#steps)
+## 步骤
+
+[DIR(output:"checkpoint" parent:"Engine/Sequencer/QuickStart" org:"hierarchy")]
+
+[REGION:call_to_action]
+	[单击此处开始学习](Engine/Sequencer/QuickStart/1 "%Engine/Sequencer/QuickStart/1:title%")
+[/REGION]
+
+
+
+
+
+
+
+
+

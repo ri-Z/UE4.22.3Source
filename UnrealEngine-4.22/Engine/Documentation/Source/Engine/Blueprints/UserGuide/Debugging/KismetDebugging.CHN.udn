@@ -1,0 +1,105 @@
+﻿INTSourceChangelist:3810557
+Availability:Public
+Title:蓝图调试
+Crumbs:%ROOT%, Engine/Blueprints, Engine/Blueprints/Workflow
+Description:使用断点暂停执行，以检查图表和变量值。
+version: 4.9
+Parent:Engine/Blueprints/Workflow
+order:5
+tags:Blueprints
+
+[EXCERPT:Overview]
+蓝图调试是一项非常强大的功能，它允许您在在编辑器中运行（Play In Editor）或在编辑器中模拟（Simulate In Editor）模式中暂停游戏执行，并通过使用断点单步调试蓝图或关卡蓝图的任何图表。
+[/EXCERPT:Overview]
+
+[TOC (start:2)]
+
+(#debuggingcontrols)
+
+## 调试功能按钮
+
+调试功能按钮使得处于在编辑器中运行（Play In Editor）模式下或在编辑器中模拟（Simulate In Editor）模式下的游戏执行受到控制。当游戏运行时，这些功能按钮将在蓝图编辑器（Blueprint Editor）中启用。不同的调试特定按钮显示在 
+[工具栏](Engine/Blueprints/Editor/UIComponents\Toolbar)上，具体取决于要调试的蓝图类型和当前调试状态。 
+
+[REGION:fullwidth]
+![](debugging_editor.png)
+[/REGION:fullwidth]
+
+当在编辑器中模拟（Simulate In Editor）模式或在编辑器中运行（Play In Editor）模式处于活动状态时，**调试（Debug）** 选项卡（可从 **蓝图编辑器（Blueprint Editor）** 的窗口菜单中打开的）以及 **蓝图调试器（Blueprint Debugger）** 也将显示上下文相关的调试按钮。
+
+调试功能按钮使得处于在编辑器中运行（Play In Editor）模式下或在编辑器中模拟（Simulate In Editor）模式下的游戏执行受到控制。当游戏运行时，这些功能按钮将启用。不同的调试特定按钮显示在 
+ **工具栏（Toolbar）** 上，具体取决于要调试的蓝图类型和当前调试状态。有些功能按钮只有在相关的时候才启用，例如，当 **断点（Breakpoint）** 被点击时。
+
+![](blueprint_debugger.png)
+
+(#breakpoints)
+
+## 断点
+
+断点允许在编辑器中运行游戏时在某一点暂停游戏的执行。属于某个蓝图或关卡蓝图的所有图表的所有断点都显示在 **调试（Debug）** 选项卡中。此列表中断点的名称经过了超链接处理，您可以单击它们以直接跳转到与 **图表（Graph）** 选项卡中的断点相关联的节点。
+
+您可以在执行的图表中的任何节点上设置断点，例如 **函数调用（Function Calls）** 和 **流量控制（Flow Control）** 操作，方法是在节点上 **右键单击（Right-clicking）** 并选择 **添加断点（Add Breakpoint）**。在节点上设置断点后，节点的左上角将显示一个图表。
+
+![Blueprint Debugging - Breakpoint Enabled](k2_breakpoint.png)
+
+您也可以通过在节点上 **右键单击（Right-clicking）** 并选择 **禁用断点（Disable Breakpoint）** 或单击 **调试（Debug）** 中断点旁边的图标来禁用断点。这也可以通过 **右键单击（Right-clicking）** **调试（Debug）** 选项卡中的断点并选择 **禁用断点（Disable Breakpoint）** 来完成。
+
+![Blueprint Debugging - Breakpoint Disable Option](k2_Breakpoint_toggleoff.png)
+
+这样就保留了断点，但它不会在执行节点时停止游戏。禁用的断点仅显示为大纲。
+
+![Blueprint Debugging - Breakpoint Disabled](k2_breakpoint_disabled.png)
+
+若要启用已禁用的断点，请在节点上 **右键单击（Right-clicking）** 并选择 **启用断点（Enable Breakpoint）** 或单击 **调试（Debug）** 中断点旁边的图标来启用断点。这也可以通过 **右键单击（Right-clicking）** **调试（Debug）** 选项卡中的断点并选择 **启用断点（Enable Breakpoint）** 来完成。
+
+![Blueprint Debugging - Breakpoint Enable Option](k2_breakpoint_toggleon.png)
+
+您可以通过 **右键单击（Right-clicking）** 节点或 **右键单击（Right-clicking）** **调试（Debug）** 选项卡中的断点并选择 **移除断点（Enable Breakpoint）** 来移除断点。
+
+点击断点时，图表将聚焦于包含该断点的节点，并在该断点上显示指标。
+
+![Blueprint Debugging - Breakpoint Hit Indicator](k2_breakpoint_indicator.png)
+
+此外，视口将显示一个覆层，以提醒玩家游戏已暂停以进行调试。
+
+![Blueprint Debugging - Viewport overlay](k2_debug_viewport.png)
+
+
+(##debugtabandblueprintdebugger)
+
+## 调试选项卡和蓝图调试器
+
+[EXCERPT:DebugTab]
+
+[INCLUDE:#DebugPanel]
+
+(#watchvalues)
+### 监视值
+
+ **监视值（Watch values）** 允许您在执行期间快速方便地查看变量值。所选Actor以及关卡蓝图的所有监视值都将在点击断点后进行调试时显示在调试（Debug）窗口中，并将随着您单步调试图标而更新。
+
+![Blueprint Debugging - Watch Values](k2_watch_value.png)
+
+被监视的值也可以作为变量上方的气泡直接显示在图表中。
+
+![蓝图调试 - 监视值信息气泡](k2_watch_bubble.png)
+
+若要启用监视信息气泡的显示，只需单击变量名称旁边的放大镜(![蓝图调试 - 监视值按钮](k2_icon_watch.png))。
+
+(#executiontrace)
+
+### 执行轨迹
+
+ **执行轨迹（Execution Trace）** 堆栈显示执行了的节点列表，其中最新的节点位于顶部。
+
+![蓝图调试 - 执行轨迹堆栈](k2_debug_exectrace.png)
+
+在调试时，此列表会随着您对图表的单步调试而更新。
+
+[/EXCERPT:DebugTab]
+
+[COMMENT:none]
+[EXCERPT:DebugPanel]
+ **调试（Debug）** 选项卡以断点和监视值的形式显示了由设计师指定为重要的信息，以及已执行且属于蓝图的所有节点的跟踪堆栈。此窗口还显示了在使用断点时用于控制游戏执行的功能按钮。
+[/EXCERPT:DebugPanel]
+[/COMMENT]

@@ -1,0 +1,39 @@
+﻿INTSourceChangelist:3810467
+Availability:Public
+Title:蓝图指导
+Crumbs: %ROOT%, Engine, Engine/Blueprints
+Description:蓝图指导页面包含数个精炼的蓝图使用步骤指南。 
+Related: Engine/Blueprints
+Related: Engine/Blueprints/UserGuide
+Related: Gameplay
+version: 4.9
+parent: Engine/Blueprints
+order:2
+type:landing
+tags:Blueprints
+topic-image:BP_HowTo_Topic.png
+
+如您刚接触到虚幻引擎 4 的 [](Engine/Blueprints)，“蓝图指导”则大有裨益。它提供蓝图使用核心要素的信息，包括创建蓝图、添加和连接节点、创建变量以及下表所示的其他内容。 
+
+在熟悉并了解蓝图的核心要素后，可在 [](Gameplay) 中查看“游戏性导向蓝图指导”。该部分将对游戏性相关要素进行说明，如生成/摧毁 Actors、重生（摧毁后）、使用计时器等。 
+
+
+(#Beginner)
+## 初级
+[DIR(output:"fancy" type:"how-to" skill:"Beginner" parent:"Engine/Blueprints/BP_HowTo" org:"hierarchy")]
+
+(#Intermediate)
+## 中级
+[DIR(output:"fancy" type:"how-to" skill:"Intermediate" parent:"Engine/Blueprints/BP_HowTo" org:"hierarchy")]
+
+(#Advanced)
+## 高级
+[DIR(output:"fancy" type:"how-to" skill:"Advanced" parent:"Engine/Blueprints/BP_HowTo" org:"hierarchy")]
+
+
+
+
+
+
+
+

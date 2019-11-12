@@ -1,0 +1,11 @@
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+
+/*=============================================================================
+	VulkanCommon.usf: Common Vulkan shader code
+=============================================================================*/
+
+// Update this GUID to improve shader recompilation for Vulkan only shaders
+// GUID = {98AC8FD8-9750-44D2-96BD-4880735DBC94}
+// Glslang 1.1.82.1
+
+#pragma once

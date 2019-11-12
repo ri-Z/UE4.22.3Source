@@ -1,0 +1,553 @@
+﻿INTSourceChangelist:3782314
+Availability: Docs
+Title: 可视性剔除
+Crumbs: %ROOT%, Engine, 
+Description: 如何在您的游戏中使用可视性剔除。
+Version: 4.13
+
+[TOC(start:2 end:2)]
+
+##什么是可视性剔除？
+
+可视性剔除使用一个过程来采集场景中的所有Actor，然后使用一种可用的剔除方法来测试Actor是否可见。通过减少待测试的GPU查询数量，检查Actor可视性状态的过程可用于提高剔除效率。 
+
+为了理解可视性和遮挡剔除的工作原理，首先要了解如何使用Actor边界框和球体来测试其可视性状态，视锥体的作用，以及最终使Actor成为遮挡物或被遮挡物的原因。 
+
+###Actor边界
+
+每个Actor都有自己的边界。它们由围绕网格体几何体的边界框和球体组成。您可通过静态网格体编辑器、人物角色或每一实例，在场景中的细节面板上编辑边界。出于可视性和遮挡剔除目的，它用于测试Actor在摄像机视野内是否可见。
+
+
+![](BoundsEditorView1.png)(w:350)
+[REGION:caption]
+Actor的边界框和球体
+[/REGION]
+
+#####设置边界范围
+
+您可以使用以下选项设置静态和骨架网格体边界。
+
+[REGION:imagetable]
+| ![](BoundScaleSetting.png)(w:400) | ![](BoundsScaleSettingSMEditor.png)(w:400) |
+| --- | --- |
+| 场景每一实例细节面板 | 静态和骨架网格体编辑器细节面板 | 
+[/REGION]
+
+[REGION:note]
+ **边界范围** 的每一实例设置将使用对Actor的边界均匀缩放的乘数，而静态网格体编辑器和人物角色将允许您设置特定的XYZ坐标值。
+[/REGION]
+
+如需查看Actor的边界，必须先进入视口然后通过 **显示（Show）** > **高级（Advanced）** > **边界** 或使用控制台命令‘Show Bounds’。然后在场景中选择Actor以查看边界可视化状态。
+
+[OBJECT:ComparisonSlider]
+ [PARAM:before]
+ ![Bounds Scale: 1.0](Bounds2.png)(w:500)
+ [/PARAM]
+ [PARAM:after]
+ ![Bounds Scale: 1.25](Bounds3.png)(w:500)
+ [/PARAM]
+[/OBJECT]
+[REGION:caption]
+_在所选Actor的细节面板中设置边界范围。_
+[/REGION]
+
+[REGION:tip]
+当您增加Actor的边界时，您无需使用整数作为增量。您可以使用小数来逐步增加，直至获得所需结果。例如，将边界范围增加到1.15而不是增加到2.0。 
+[/REGION]
+
+
+
+###什么是摄像机的视锥体？
+
+摄像机的视锥体是3D空间内，从其视点起呈现为金字塔形状的观察区域。 
+
+[REGION:imagetable]
+| [INCLUDE:#cameraview1] |
+| ---------------------- |
+| 摄像机视野（FOV）设为90度（默认） |
+[REGION:caption]
+_单击图片以查看完整尺寸_
+[/REGION]
+[/REGION]
+
+从摄像机的视角看，此金字塔形状代表我们的 **视野**（FOV）。此视角显示此视图内场景中的各种Actor。下图包含构成上述场景的所有元素。它可以包括在视锥体内不可见的Actor，如照亮场景的聚光灯，或在视锥体内不可见的其他Actor。  
+
+[REGION:imagetable]
+| [INCLUDE:#sceneview1]| 
+| --- |
+| 带摄像机属性的场景视图  |
+[/REGION]
+[REGION:caption]
+_单击图片以查看完整尺寸_
+[/REGION]
+
+| 序号 | 说明 |
+| ------ | ----------- |
+| **1**  | **视野（FOV）：**以度为单位测量的视角宽度。|
+| **2**  | **近裁剪面：**距离待渲染摄像机最近的点。|
+| **3**  | **摄像机视锥体：**介于近裁剪面和远裁剪面之间的区域。此视图中的任何物体均视为渲染对象。|
+| **4**  | **远裁剪面：**距离待渲染摄像机最远的点。它由场景深度控制，而非由裁剪视图的设定距离控制。|
+
+[COMMENT:none]
+-
+[EXCERPT:CameraView1]
+[REGION:lightbox]
+[![](CameraView.png)(w:600)](CameraView.png)
+[/REGION]
+[/EXCERPT:CameraView1]
+
+[EXCERPT:SceneView1]
+[REGION:lightbox]
+[![](FrustumView.png)(w:600)](FrustumView.png)
+[/REGION]
+[/EXCERPT:SceneView1]
+-
+[/COMMENT]
+
+视锥体受其 **视野**（FOV）控制。此值越大，视角越宽，此值过小将限制可用的视角。
+
+[REGION:note]
+默认情况下，摄像机的视锥体未启用可视化。您必须先进入视口并选择 **显示（Show）** > **高级（Advanced）** > **摄像机椎体（Camera Frustum）** 来启用它。
+[/REGION]
+
+[OBJECT:EmbeddedVideo]
+ [PARAMLITERAL:width]
+ 640
+ [/PARAMLITERAL]
+ [PARAMLITERAL:height]
+ 360
+ [/PARAMLITERAL]
+ [PARAMLITERAL:videoid]
+ RqTqc0dLKPM
+ [/PARAMLITERAL]
+[/OBJECT]
+
+有关[使用和设置摄像机](Gameplay/HowTo/UsingCameras)的更多信息，您可以在此页面中阅读相关内容。
+
+
+###什么是遮挡？
+
+当存在可以执行阻挡或被另一个Actor阻挡的Actor时，遮挡便会发生。Actor可以是遮挡物、被遮挡物或两者兼而有之。 
+ 
+* 遮挡物是可以遮挡另一个Actor，使其在视锥体中不可见的任何Actor。
+* 被遮挡物是被另一个Actor遮挡，而在视锥体中不可见的任何Actor。若此Actor足够大，它也可以成为阻挡视锥体的较小Actor的遮挡物。
+
+在下面的实例中，摄像机表示场景的视图。此墙后方具有两个不可见的Actor，因为它们被阻挡在摄像机视野之外。雕像和桶都将是被遮挡物，因为它们被阻挡它们的墙体所遮挡。此外，请记住，如果它们遮挡了它们后方的任何物体，则桶和雕像都可以是遮挡物。每一个被遮挡物都可以是遮挡物，但前提是其大到足以阻挡另一个Actor。
+
+[REGION:imagetable]
+| [INCLUDE:#OccluderVsOccludee1] | [INCLUDE:#OccluderVsOccludeeCV] |
+| --- | --- | 
+| 遮挡物 = 墙体，被遮挡物 = 桶和雕像  | 摄像机视野显示了遮挡桶和雕像的墙体。|
+[/REGION]
+[REGION:caption]
+_单击图片以查看完整尺寸_
+[/REGION]
+
+[COMMENT:none]
+-
+[EXCERPT:OccluderVsOccludee1]
+[REGION:lightbox]
+[![](OccluderVsOccludee.png)(w:450)](OccluderVsOccludee.png)
+[/REGION]
+[/EXCERPT:OccluderVsOccludee1]
+
+[EXCERPT:OccluderVsOccludeeCV]
+[REGION:lightbox]
+[![](OccluderVsOccludeeCameraView.png)(w:450)](OccluderVsOccludeeCameraView.png)
+[/REGION]
+[/EXCERPT:OccluderVsOccludeeCV]
+-
+[/COMMENT]
+
+###可视性剔除
+
+以下类型的剔除用于确定场景中Actor的当前可视性状态。
+
+| 剔除类型 | 说明 |
+| ---------------- | ----------- |
+| **距离** | Actor的设定距离用于确定其可视性状态。|
+| **视锥体** | 它用于移除摄像机的视锥体内无可视边界的任何Actor。此可视区域之外的任何物体均不会被渲染。|
+| **遮挡** | 它用于移除处于被另一个Actor阻挡而无法看到的摄像机视锥体内的任何其他Actor。这可以通过测试Actor是否在场景的深度缓冲区中可见来完成。若为可见，则它将被渲染，若不可见，则它将被视为受到遮挡而不被渲染。|
+
+
+有关[缓冲可视化](Engine/UI/LevelEditor/Viewports/ViewModes#buffervisualization)的更多信息，您可以在此页面中阅读相关内容。
+
+###可视性剔除方法
+
+从场景中剔除数据后，就会根据已经实施的可用剔除方法对其进行测试，以测试Actor的可视性状态。可视性剔除方法协同工作，
+并且在移动情况下提供无法进行动态遮挡的解决方案。
+
+此处列出的剔除方法根据其应用顺序以及渲染线程成本从低到高顺序进行排列。
+
+* 距离剔除（每一实例和剔除距离体积）
+* 视锥体剔除
+* 预计算遮挡剔除
+* 动态遮挡剔除（硬件遮挡查询）
+
+
+####距离剔除（每一实例）
+
+场景中的每个Actor都可以拥有自己的设置绘制距离，该距离将为Actor酌量渲染为可见时所需的最小和最大距离。
+
+![](DistanceCullSettings.png)
+
+| **属性** | **说明** |
+| ------------ | --------------- |
+| **最小绘制距离** | 渲染图元时应采用的最小距离。它以从图元的边界球体的中心到摄像机位置的世界场景空间单位进行测量。|
+| **所需最大绘制距离** | 关卡设计师触及的最大绘制距离。实际最大绘制距离是此对象的最小值（忽略0）与影响此对象的体积之和。|
+| **当前最大绘制距离** | 它是一项不可编辑属性。此字段显示由图元驻留在其中的CullDistanceVolume所设置的剔除距离。若将其设为0，则未设置剔除距离体积，因此值将为0。|
+
+在以下实例中，已为立方体设置 **最小绘制距离** 和 **所需最大绘制距离**。这些值确定了渲染Actor的最近距离或可以从摄像机视图渲染Actor的最远距离。
+
+* **最小绘制距离：**500
+* **所需最大绘制距离：**1000
+
+[REGION:note]
+请注意，此处的 **所需最大绘制距离** 将覆盖剔除距离体积中设置的任何更高值。有关更多信息，请参阅[剔除距离体积](1_TimH\2_IN_PROGRESS\VisibilityCulling\CullDistanceVolume)页面。
+[/REGION]
+
+[OBJECT:EmbeddedVideo]
+ [PARAMLITERAL:width]
+ 640
+ [/PARAMLITERAL]
+ [PARAMLITERAL:height]
+ 360
+ [/PARAMLITERAL]
+ [PARAMLITERAL:videoid]
+ LiiJ13LulIU
+ [/PARAMLITERAL]
+[/OBJECT]
+
+
+[COMMENT:none]
+-
+[REGION:imagetable]
+| [INCLUDE:#Units1500] | [INCLUDE:#Units1000] | [INCLUDE:#Units500] |
+| --- | --- | --- |
+| 大于所需最大绘制距离 | 介于最小和最大绘制距离之间 | 小于最小绘制距离 | 
+[/REGION]
+
+为了协助说明以上视频中发生的情况，此处图像显示了一幅俯视图，并标出了从 **摄像机** Actor到 **立方体** Actor的中心点的距离。俯视图正下方的图片显示了摄像机视图。
+
+-
+[/COMMENT]
+
+由于 **所需最大绘制距离** 设为1000并且 **最小绘制距离** 设为500，因此只有当摄像机在与Actor的边界框中心相隔的这段距离内移动时，才能看见此立方体Actor。当摄像机移动到此空间之外时，将不再渲染此Actor。 
+
+[COMMENT:none]
+
+[EXCERPT:Units1500]
+[REGION:lightbox]
+[![](1500units.png)(w:300)](1500Units.png)
+[/REGION]
+[/EXCERPT:Units1500]
+
+[EXCERPT:Units1000]
+[REGION:lightbox]
+[![](1000units.png)(w:300)](1000Units.png)
+[/REGION]
+[/EXCERPT:Units1000]
+
+[EXCERPT:Units500]
+[REGION:lightbox]
+[![](500units.png)(w:300)](500Units.png)
+[/REGION]
+[/EXCERPT:Units500]
+
+[/COMMENT]
+
+
+####剔除距离体积
+
+剔除距离体积允许您在数组中指定一组尺寸和距离，此数组将根据相应距离处的边界尺寸自动移除任何Actor。这些体积对于具有详细内部的大型户外场景非常有用。 
+
+有关使用和设置[剔除距离体积](1_TimH\2_IN_PROGRESS\VisibilityCulling\CullDistanceVolume)的更多信息，您可以在此页面中阅读相关内容。
+
+
+####视锥体剔除
+
+摄像机的视锥体用于测试场景中的剔除数据是否在其观察区域内可见。此过程使用Actor的边界框和球体来检查它是否在视图内可见。若不可见，则不会渲染Actor。
+
+以下实例演示视锥体如何考虑观察区域内可见的Actor。
+
+* 黄色代表视锥体的视野和未被其他Actor遮挡的区域。
+* 红色代表因其他Actor（即墙体和大型对象）而被遮挡的视锥体部分。
+
+[REGION:imagetable]
+| [INCLUDE:#Camera1] | [INCLUDE:#Camera2] | [INCLUDE:#Camera3] | [INCLUDE:#Camera4] |
+| ------------------ | ------------------ | ------------------ | ------------------ |
+|          1         |          2         |          3         |          4         | 
+[/REGION]
+
+| **数量** | **说明** |
+| ---------- | --------------- |
+| **1** | 从此视角看，存在可以用作遮挡物的大型墙体，它们遮挡了除沿走廊那一部分之外的所有视图。因此，仅立方体可见。这表明球体和锥体是墙体的被遮挡物，且不会被渲染。|
+| **2** | 随着摄像机向前移动，视锥体中可查看到更多场景。由于我们可以在墙角周围看到球体和锥体的一部分，因此墙体不再完全遮挡它们。这意味着，它们正处于完全渲染中，尽管我们只能看到它们中的一小部分。|
+| **3** | 紧接着，当摄像机向左转时，现在我们可在视锥体内看到球体和立方体。视野之外的锥体和墙体将不再被渲染。|
+| **4** | 现在，当摄像机向右转回时，锥体和立方体处于视野之内，而视野之外的墙体和球体将不再被渲染。|
+
+[REGION:note]
+此为可视性剔除工作原理的一般实例，但此处并未提及许多关于渲染物体方法的警告和原因。有关使用可视性剔除的更多提示和策略，请参阅本页中的[最佳实践的剔除策略](#cullingstrategiesforbestpractices)部分。
+[/REGION]
+
+[COMMENT:none]
+
+[EXCERPT:Camera1]
+[REGION:lightbox]
+[![](Camera1.png)(w:215)](Camera1.png)
+[/REGION]
+[/EXCERPT:Camera1]
+
+[EXCERPT:Camera2]
+[REGION:lightbox]
+[![](Camera2.png)(w:215)](Camera2.png)
+[/REGION]
+[/EXCERPT:Camera2]
+
+[EXCERPT:Camera3]
+[REGION:lightbox]
+[![](Camera3.png)(w:215)](Camera3.png)
+[/REGION]
+[/EXCERPT:Camera3]
+
+[EXCERPT:Camera4]
+[REGION:lightbox]
+[![](Camera4.png)(w:215)](Camera4.png)
+[/REGION]
+[/EXCERPT:Camera4]
+
+[/COMMENT]
+
+
+####预计算可视性体积
+
+[COMMENT:none]
+-![](PrecomputedVisibilityVolume.png)(w:500)-
+[/COMMENT]
+
+构建静态光照后，预计算可视性体积使用布置在表面上的可视性单元格。这些可视性单元格使用“摄像机”视图来更改Actor的可视性状态。此剔除方法非常适用于在无法发出硬件遮挡查询以检查可视性状态的移动设备上进行可视性剔除。 
+
+有关使用和设置[预计算可视性体积](1_TimH\2_IN_PROGRESS\VisibilityCulling\PrecomputedVisibilityVolume)的更多信息，您可以在此页面中阅读相关内容。
+
+####动态遮挡
+
+只需查看已确定位于摄像机视锥体内的Actor，即可最终在剔除方法链中执行动态遮挡查询。然后，通过将视锥体内的Actor边界发送至GPU并在一帧后将它们读回，根据场景深度缓冲区，对它们进行测试以确认其可见性。如果Actor边界在场景深度内不可见，则它将不会被渲染。这可以使被另一个Actor遮挡的任何Actor的可视性状态保持为不被渲染。此方法可允许更远的可视距离，因为它依赖于近似距离而非为远裁剪面的距离设置特定值。
+
+####层次式Z缓冲区
+
+[REGION:warning]
+层次式Z缓冲区遮挡实施仍被认为处于实验阶段。某些已知问题尚未得到解决，例如某些网格体在不该剔除时被剔除。 
+[/REGION]
+
+层次式Z缓冲区遮挡的背后理念是用多种分辨率表示场景深度，以确定Actor的可视性。这可以通过为场景深度创建渲染目标的贴图版本来完成，该场景深度具有用于标识受试Actor在场景中的深度的纹素。可以通过比较Actor边界的深度值与采集的渲染目标中的深度值来测试Actor是否遮挡。通过使用较低分辨率的Mip关卡，这将对Actor的边界进行较为保守的检查，从而减少从Mip关卡采样时的纹理拾取次数。 
+
+[REGION:note]
+如果使用比实际场景分辨率更低的分辨率来渲染场景，您可能会面临错误剔除本应可见Actor的风险。  
+[/REGION]
+
+可以使用以下控制台命令来启用层次式Z缓冲区遮挡剔除： 
+
+	r.HZBOcclusion
+
+* 0表示禁用层次式Z缓冲区遮挡
+* 1表示启用层次式Z缓冲区遮挡
+* 2表示强制使用层次式Z缓冲区系统，该系统将覆盖任何渲染平台首选项
+
+
+##最佳实践的剔除策略
+
+以下是设计和处理游戏可视性剔除时应当遵循的一些良好做法。
+
+###从ActorGPU查询中“弹出”/延迟
+
+这是为视锥体和硬件遮挡查询而使用可视性剔除时的常见问题，因为这些查询会在一帧后从GPU读回。当您非常快速地转动玩家摄像机时， 
+或者当您走到后方有强烈光照区域的灯光昏暗区域中的拐角处时，这个现象通常很明显。 
+
+* 使用其他几何体以便隐藏此瑕疵。对于洞穴或具有明亮外部的黑暗区域之类的物体，使用恰好可以放在这些碎片外部的大型遮挡物网格体，从而隐藏弹出并阻挡使其变得显眼的光线。
+
+* 扩大造成攻击行为的Actor的边界范围。 
+* 以无需组装太多小碎片的方式构建几何体。这对于墙体、地板和天花板尤其适用。
+
+###大视图距离
+
+由于待渲染的Actor数量较多，大视图距离会对性能产生影响。通过使用大型遮挡物遮挡这些大视图距离，您可以遮挡原本会被渲染的Actor。
+这可以通过减少待检查的Actor来减少需要发送至GPU的查询数量。反过来，通过减少待检查和待渲染的Actor，可以获得更好性能。
+
+* 尽可能使用大型遮挡物。 
+* 使用剔除距离体积以移除远距离处不易发现的任何较小Actor，即使这些Actor被遮挡在视线之外时也是如此。
+* 限制从半透明Actor处获得的过度绘制量，因为这些Actor不会遮挡。
+
+###资源构造
+
+为游戏创建几何体时，为了实现设计目的和可重复利用，最好将几何体分解成模块化碎片。然而，如果使用太小而无法构成较大几何体的碎片，则可能会导致设计过程中过度模块化。因此，需要为每个Actor检查其可视性状态。最好是找到一个适合游戏设计的平衡点，并对其进行优化，以获得最佳性能。减少检查可视性所需的查询数量是优化的关键，并有助于减少可能发生的“弹出”。 
+
+* 在制作结构表面的关卡时，应使用较大几何体，而不是将其分解成许多较小碎片。与测试单个Actor相比，测试多个较小Actor会对GPU产生更大的影响。
+* 考虑网格体的构造会减少Actor的“弹出”。
+
+
+###考虑遮挡与距离剔除成本
+
+遮挡法和可视性剔除法的成本远远超过距离剔除法，因为这两种方法需要GPU查询，因此为远距离物体设置剔除距离体积不失为一种好方法，即使它们会在场景内某一部分中被遮挡。
+
+* 充分利用剔除距离体积以减少遮挡剔除成本。
+* 尽可能地流送出关卡，而非依赖距离或遮挡剔除。
+* 使用‘Stat Initviews’命令来确保性能在检查时维持平衡。
+
+有关[关卡流送](Engine/LevelStreaming)的信息，请参阅此页面中的设置方法。
+
+##项目设置
+
+若要打开 **项目设置（Project Settings）**，必须先进入主菜单，然后选择 **编辑（Edit）** > **项目设置（Project Settings）**。打开窗口后，可以选择 **渲染（Rendering）** 类别以查看名为 **剔除（Culling）** 部分下的可用设置。
+
+
+![](ProjectSettingsCulling.png)
+
+| 设置 | 说明 |
+| --- | --- |
+| **遮挡剔除** | 允许对遮挡的网格体进行剔除而不进行渲染。若禁用此选项，则将禁用项目的所有遮挡剔除，这可能会产生性能影响。|
+| **EarlyZPass的最小屏幕半径** | 为早期Z传递而剔除对象时所使用的屏幕半径。此值越大，性能越高，但是若不渲染大型遮挡物，非常大的值反而会降低性能。|
+| **警告无预计算可视性** | 当没有预计算可视性数据可用于当前摄像机位置时，显示警告。若您制作的游戏依赖于预计算可视性，此设置可能会大有帮助。|
+
+[REGION:tip]
+若您正在开发手游，那么在开发手游时启用 **警告无预计算可视性（Warn about no precomputed visibility）** 选项，可作为关卡设计师的良好提醒，并具有重要意义，因为它目前不使用动态遮挡剔除。
+[/REGION]
+
+
+[COMMENT:none]
+-
+##控制台命令
+
+| 控制台变量 | 说明 |
+| --- | --- |
+| **r.OneFrameThreadLag** | 控制何时渲染遮挡查询。在基本渲染阶段之前进行渲染可能会造成更严重的遮挡（因为并非所有遮挡物通常都会在earlyzpass中渲染）。然而，它可能会减少CPU因等待某些平台上的查询结果而发生的停滞，并提高整体性能。0: 在BasePass之后。1: 在EarlyZPass之后，但在BasePass之前。|
+| **r.AllowOcclusionQueries** | 若为零，则不会使用遮挡查询来剔除图元。|
+| **r.DownsampledOcclusionQueries** | 是否向缩减采样的深度缓冲区发出遮挡查询。|
+| **r.NumBufferedOcclusionQueries** | 缓冲遮挡查询的帧数（包括当前渲染线程帧）。帧数越多，等待结果的CPU停滞的可能性越小，但过时的查询瑕疵越多。|
+
+[/COMMENT]
+
+##性能的相关统计数据
+
+在游戏的实时渲染过程中，通过定期检查与可视性和遮挡剔除相关的场景生成的统计数据来管理场景优化，具有重要意义。
+
+使用以下控制台命令查看与场景的可视性和遮挡剔除相关的数据统计： 
+
+	Stat Initviews
+
+[REGION:warning]
+请记住，在测试可视性和遮挡剔除时，需要注意几点。
+
+* 在 **Wireframe** 视图模式下禁用遮挡剔除。
+* 在编辑器中运行PIE或单机游戏中使用控制台命令 ** Stat Initviews ** 可获得更准确的结果，因为计算可视性和遮挡剔除时，代表灯光、摄像机等编辑器Actor的几何体将包括在内。
+[/REGION]
+
+
+[REGION:lightbox]
+![](StatInitViews.png)
+[/REGION]
+[REGION:caption]
+以上的场景统计数据来自EPIC Games创建的[无尽之剑草原](https://www.unrealengine.com/marketplace/infinity-blade-plain-lands)，可在虚幻商城免费获取。
+[/REGION]
+
+ **Stat Initiviews** 窗口分为‘循环计数器’和‘计数器’两部分。循环计数器的统计数据主要计算处理过程中所需的循环次数（以毫秒为单位），而计数器的统计数据只是简单地添加处理的图元。
+
+[REGION:tip]
+‘可见静态网格体元素’是渲染线程时间的最大贡献者，因此需要仔细观察和优化。
+[/REGION]
+
+| Stat Initviews |  |
+| --- | --- |
+| **循环计数器** | [INCLUDE:#cyclecounter] |
+| **计数器** | [INCLUDE:#counters] |
+
+
+[COMMENT:none]
+
+[EXCERPT:CycleCounter]
+| 统计数据 | 说明 |
+| --- | --- |
+| **查看可视性** | 处理Actor可视性查询所花费的帧时间量。|
+| **遮挡剔除** | 在其他Actor遮挡的视锥体内，查询Actor场景所花费的帧时间量。|
+| **视锥剔除** | 查询Actor的边界是否处于视锥体内所花费的帧时间量。|
+| **解压缩遮挡** | 加载预计算可视性所花费的帧时间量。|
+[/EXCERPT:CycleCounter]
+
+[EXCERPT:Counters]
+| 统计数据 | 说明 |
+| --- | --- |
+| **被处理图元** | 此为场景中正在处理的Actor总数。|
+| **视锥体剔除图元** | 此为不在视锥体视野内时被剔除的图元数量。|
+| **被遮挡图元** | 在视锥体视野内被其他Actor遮挡的Actor数量。|
+| **遮挡查询** | 此为根据视锥体内可见的Actor数量而发送至GPU的场景遮挡查询的数量。|
+| **可见动态图元** | 此为场景中将其移动性设为“可移动”的诸如粒子系统和植被实例等动态图元的数量。|
+| **可见静态网格体元素** | 此为场景中将其移动性设为“静态”的可见网格体数量。|
+[/EXCERPT:Counters]
+
+[/COMMENT]
+
+##方法和技巧
+
+以下提示和技巧可用于帮助您在怀疑与可视性或遮挡剔除相关的问题时对场景进行故障排除和测试。 
+
+#####可视化遮挡图元
+
+这将使可视化模式能够绘制场景内在摄像机视图中被遮挡的任何Actor的边界框。使用[预计算可视性体积](1_TimH\2_IN_PROGRESS\VisibilityCulling\PrecomputedVisibilityVolume)时，绿色边界框表示Actor被动态遮挡，红色边界框则表示Actor被静态遮挡。 
+
+使用以下控制台命令启用此可视化： 
+
+	r.VisualizeOccludedPrimitives 1
+
+
+[REGION:note]
+此控制台命令仅在编辑器中有效，而在PIE或单机游戏中无效。
+[/REGION]
+
+在以下示例中，将墙体阻挡的遮挡Actor的可视化与墙体移除后Actor的放置进行比较。 
+
+[OBJECT:ComparisonSlider]
+ [PARAM:before]
+ ![Visualize Occluded Primitives Enabled (Green Box)](VisOccludedPrimitives1.png)(w:500)
+ [/PARAM]
+ [PARAM:after]
+ ![Actors occluded by the wall](VisOccludedPrimitives2.png)(w:500)
+ [/PARAM]
+[/OBJECT]
+
+
+#####冻结渲染
+
+它将从当前的摄像机视角切换场景的渲染状态，同时允许您在世界场景中自由移动。
+
+使用以下控制台命令切换此模式：
+
+	FREEZERENDERING
+
+
+[OBJECT:EmbeddedVideo]
+ [PARAMLITERAL:width]
+ 640
+ [/PARAMLITERAL]
+ [PARAMLITERAL:height]
+ 360
+ [/PARAMLITERAL]
+ [PARAMLITERAL:videoid]
+ El127q0lv5s
+ [/PARAMLITERAL]
+[/OBJECT]
+
+
+#####游戏视图模式
+
+您可以使用键盘快捷键 **G** 或使用主 **视口选项（Viewport Options）** 下方的箭头键选择 **游戏视图（Game View）**，以便在编辑器中工作并切换在游戏中所看到的内容。当您不想PIE或启动游戏但需要查看游戏的外观时，此模式非常有用。此模式非常适合用于检查[剔除距离体积](1_TimH\2_IN_PROGRESS\VisibilityCulling\CullDistanceVolume) 和[预计算可视性体积](1_TimH\2_IN_PROGRESS\VisibilityCulling\PrecomputedVisibilityVolume)的理想选择，因为除非您在正在游戏中或正在使用游戏视图，否则它们将不起作用。
+
+有关[游戏视图](Engine\UI\LevelEditor\Viewports\Basics)模式的更多信息，您可以在此页面中阅读相关内容。
+
+
+
+
+##相关链接
+
+[REGION:buttonlist]
+  * [](1_TimH\2_IN_PROGRESS\VisibilityCulling\PrecomputedVisibilityVolume)
+  * [](1_TimH\2_IN_PROGRESS\VisibilityCulling\CullDistanceVolume)
+[/REGION]

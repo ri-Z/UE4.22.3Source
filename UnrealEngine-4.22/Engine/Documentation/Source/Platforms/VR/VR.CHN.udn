@@ -1,0 +1,34 @@
+﻿INTSourceChangelist:3782314
+Availability:Public
+Title:虚拟现实开发
+Crumbs:%ROOT%, Platforms
+Description:在虚拟现实平台上进行开发的信息。
+Navigation:platform
+Version: 4.17
+Type:landing
+tags:VR
+tags:Platform
+parent:Platforms
+order:2
+topic-icon:%ROOT%/platform_icon.png
+topic-image:VirtualRealityDevelopment_topic.png
+
+(#DesktopPlatforms)
+## 台式机平台
+
+[DIR(end:"1" output:"topic" type:"landing" tags:"platform" tags:"Desktop VR" parent:"Platforms/VR")]
+
+(#MobilePlatforms)
+## 移动平台
+
+[DIR(end:"1" output:"topic" type:"landing" tags:"platform" tags:"Mobile VR" parent:"Platforms/VR")]
+
+(#GeneralVRDevelopment)
+## 常规VR开发
+
+[DIR(end:"1" output:"topic" parent:"Platforms/VR" type:"overview,reference,how-to")]
+
+(#TrainingStreams)
+## 培训视频
+
+[DIR(output:"video" type:"video" tags:"Virtual Reality")]

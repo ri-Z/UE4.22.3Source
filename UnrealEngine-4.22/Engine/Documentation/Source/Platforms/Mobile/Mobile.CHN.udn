@@ -1,0 +1,38 @@
+﻿INTSourceChangelist:3782314
+Availability:Public
+Title:移动平台游戏开发
+Crumbs:%ROOT%, Platforms
+Description:供开发者创建移动平台游戏的信息。
+Platform:Mobile
+Navigation:platform
+version: 4.9
+parent:Platforms
+tags:Mobile
+order:0
+type:landing
+topic-image:MobileGameDevelopment_topic.png
+
+[REGION:banner]
+![](mobile_banner.png)
+[/REGION]
+
+(#StartingOut)
+## 开始
+
+[DIR(output:"topiccompact" type:"quick start" tags:"mobile")]
+
+(#MobilePlatforms)
+## 移动平台
+
+[DIR(output:"listbutton" type:"landing" parent:"Platforms/Mobile")]
+
+(#MobileServices)
+## 移动服务
+
+[DIR(end:"1" output:"listbutton" type:"how-to" parent:"Platforms/Mobile")]
+
+(#GeneralMobileDevelopment)
+## 通用移动开发
+
+[DIR(end:"1" output:"listbutton" type:"overview" parent:"Platforms/Mobile")]
+

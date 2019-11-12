@@ -1,0 +1,47 @@
+﻿INTSourceChangelist:3872326
+Availability: Public
+Title:Linux快速入门
+Crumbs:
+Description:学习如何在Linux上下载、编译和运行UE4。
+Platform:Linux
+Version: 4.13
+type:quick start
+parent:Platforms/Linux
+order: 2
+tags:Linux
+SkillLevel:Beginner
+prereq:GettingStarted/RecommendedSpecifications
+prereq:Platforms/Linux/BeginnerLinuxDeveloper/SupportedGfxDrivers
+topic-image:linuxQS_topic.png
+
+
+[REGION:imagetable]
+![](CompiledEditor_Linux.png)(w:920)  
+[REGION:caption]
+完成此教程学习后，您便能在装有Linux操作系统的电脑上运行虚幻引擎4（UE4）。
+[/REGION]
+[/REGION]
+
+(#goal)
+## 目标
+
+此指南将着重说明如何设置工作流，在装有Linux操作系统的电脑上成功运行UE4。
+
+(#objectives)
+## 任务
+
+在此教程的学习中，您将了解以下内容：
+
+* 如何设置Git来下载虚幻引擎的源代码。
+* 如何提交并复制虚幻引擎源代码。
+* 如何从源代码生成虚幻引擎。
+* 如何在 Linux 电脑上运行虚幻引擎。
+
+(#steps)
+## 步骤
+
+[DIR(output:"checkpoint" parent:"Platforms/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow" org:"hierarchy")]
+
+[REGION:call_to_action]
+	[点击开始](Platforms/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/1 "%Platforms/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/1:title%")
+[/REGION]
